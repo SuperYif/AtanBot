@@ -390,8 +390,9 @@
             font-size: 16px;
         }
 
-        /* 下拉菜单样式 */
-        .setting-option select {
+        /* 下拉菜单和按钮的通用样式 */
+        .setting-option select,
+        .setting-option button {
             background-color: var(--input-bg);
             color: var(--text-color);
             border: 1px solid var(--text-color);
@@ -399,12 +400,40 @@
             padding: 5px;
             font-size: 14px;
             width: 120px; /* 统一宽度 */
+            height: 30px; /* 统一高度 */
+            cursor: pointer;
+            appearance: none; /* 移除默认的下拉箭头 */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            text-align: left; /* 文本左对齐 */
+            padding-left: 10px; /* 左侧内边距 */
         }
 
-        /* 移除下拉菜单的焦点样式 */
-        .setting-option select:focus {
+        /* 下拉菜单的箭头样式 */
+        .setting-option select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='%23333' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px; /* 为箭头留出空间 */
+        }
+
+        /* 深色模式下的箭头颜色 */
+        .dark-mode .setting-option select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='%23fff' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E");
+        }
+
+        /* 移除下拉菜单和按钮的焦点样式 */
+        .setting-option select:focus,
+        .setting-option button:focus {
             outline: none;
             box-shadow: none;
+        }
+
+        /* 下载按钮特定样式 */
+        #download-button {
+            text-align: center; /* 文本居中 */
+            padding-left: 5px; /* 重置左侧内边距 */
+            padding-right: 5px; /* 重置右侧内边距 */
         }
 
         /* 历史记录容器 */
@@ -445,7 +474,10 @@
                         <option value="enter">回车发送</option>
                     </select>
                 </div>
-                <!-- 其他设置选项 -->
+                <div class="setting-option" id="download-option">
+                    <span>下载应用</span>
+                    <button id="download-button" onclick="installPWA()">下载</button>
+                </div>
             </div>
             <div class="menu-title">历史记录</div>
             <div id="history-records">
@@ -737,32 +769,62 @@
         window.addEventListener('beforeinstallprompt', (e) => {
           e.preventDefault();
           deferredPrompt = e;
-          // 显示自定义提示
-          showInstallPrompt();
+          showDownloadOption();
         });
 
-        function showInstallPrompt() {
-          // 创建一个自定义的提示元素
-          const prompt = document.createElement('div');
-          prompt.innerHTML = '将此应用添加到主屏幕以便快速访问';
-          prompt.style.position = 'fixed';
-          prompt.style.bottom = '20px';
-          prompt.style.left = '20px';
-          prompt.style.right = '20px';
-          prompt.style.backgroundColor = '#075e54';
-          prompt.style.color = 'white';
-          prompt.style.padding = '10px';
-          prompt.style.borderRadius = '5px';
-          prompt.style.textAlign = 'center';
-          
-          const closeButton = document.createElement('button');
-          closeButton.innerHTML = '关闭';
-          closeButton.style.marginLeft = '10px';
-          closeButton.onclick = () => prompt.remove();
-          
-          prompt.appendChild(closeButton);
-          document.body.appendChild(prompt);
+        function showDownloadOption() {
+          const downloadOption = document.getElementById('download-option');
+          if (downloadOption) {
+            downloadOption.style.display = 'flex';
+          }
         }
+
+        function hideDownloadOption() {
+          const downloadOption = document.getElementById('download-option');
+          if (downloadOption) {
+            downloadOption.style.display = 'none';
+          }
+        }
+
+        function installPWA() {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+              if (choiceResult.outcome === 'accepted') {
+                console.log('用户接受了安装提示');
+                hideDownloadOption();
+              }
+              deferredPrompt = null;
+            });
+          }
+        }
+
+        // 检查是否在独立模式下运行（即作为PWA安装后运行）
+        function checkStandalone() {
+          if (window.matchMedia('(display-mode: standalone)').matches) {
+            hideDownloadOption();
+          }
+        }
+
+        // 页面加载时执行
+        document.addEventListener('DOMContentLoaded', () => {
+          checkStandalone();
+
+          // 如果是在浏览器中运行，显示下载选项
+          if (!window.matchMedia('(display-mode: standalone)').matches) {
+            showDownloadOption();
+          }
+        });
+
+        // 监听显示模式变化
+        window.matchMedia('(display-mode: standalone)').addListener((e) => {
+          if (e.matches) {
+            hideDownloadOption();
+          } else {
+            showDownloadOption();
+          }
+        });
+
     </script>
 </body>
 </html>

@@ -434,6 +434,13 @@
             text-align: center; /* 文本居中 */
             padding-left: 5px; /* 重置左侧内边距 */
             padding-right: 5px; /* 重置右侧内边距 */
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        #download-button:active {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            transform: scale(0.95);
         }
 
         /* 历史记录容器 */
@@ -788,14 +795,23 @@
 
         function installPWA() {
           if (deferredPrompt) {
+            console.log('安装提示可用，尝试显示');
             deferredPrompt.prompt();
             deferredPrompt.userChoice.then((choiceResult) => {
               if (choiceResult.outcome === 'accepted') {
                 console.log('用户接受了安装提示');
                 hideDownloadOption();
+              } else {
+                console.log('用户拒绝了安装提示');
               }
               deferredPrompt = null;
+            }).catch((error) => {
+              console.error('安装过程中出错:', error);
             });
+          } else {
+            console.log('安装提示不可用');
+            // 如果deferredPrompt不可用，可能是因为PWA已经安装或不满足安装条件
+            alert('此应用程序可能已经安装或不满足安装条件');
           }
         }
 

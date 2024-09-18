@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <!-- 禁止用户缩放，保持固定比例 -->
     <title>ifBot.</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/ifBot./manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="ifBot">
-    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <link rel="apple-touch-icon" href="/ifBot./icon-192x192.png">
     <style>
         /* 定义CSS变量，用于主题颜色的灵活控制 */
         :root {
@@ -763,7 +763,7 @@
 
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').then((registration) => {
+            navigator.serviceWorker.register('/ifBot./sw.js').then((registration) => {
               console.log('ServiceWorker registration successful');
             }, (err) => {
               console.log('ServiceWorker registration failed: ', err);

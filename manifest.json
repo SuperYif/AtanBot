@@ -2,18 +2,18 @@
   "name": "ifBot",
   "short_name": "ifBot",
   "description": "一个智能聊天机器人",
-  "start_url": "/",
+  "start_url": "/ifBot./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#075e54",
   "icons": [
     {
-      "src": "/icon-192x192.png",
+      "src": "/ifBot./icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon-512x512.png",
+      "src": "/ifBot./icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

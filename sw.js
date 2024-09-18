@@ -2,12 +2,12 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open('v1').then((cache) => {
       return cache.addAll([
-        '/',
-        '/index.html',
-        '/styles.css',
-        '/app.js',
-        '/icon-192x192.png',
-        '/icon-512x512.png'
+        '/ifBot./',
+        '/ifBot./index.html',
+        '/ifBot./manifest.json',
+        '/ifBot./icon-192x192.png',
+        '/ifBot./icon-512x512.png'
+        // 添加其他需要缓存的资源
       ]);
     })
   );

@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <!-- 禁止用户缩放，保持固定比例 -->
     <title>ifBot.</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="ifBot">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
     <style>
         /* 定义CSS变量，用于主题颜色的灵活控制 */
         :root {
@@ -17,6 +22,7 @@
             --button-bg: #075e54;   /* 发送按钮背景颜色（绿色） */
             --button-text: #ffffff; /* 按钮文字颜色 */
             --button-disabled-bg: #b0b0b0; /* 停止按钮背景颜色（灰色） */
+            --bg-color-rgb: 255, 255, 255; /* 背景颜色的RGB值 */
         }
 
         /* 定义深色模式的颜色变量 */
@@ -30,6 +36,7 @@
             --button-bg: #128c7e;   /* 深色模式下的按钮背景颜色 */
             --button-text: #ffffff; /* 深色模式下的按钮文字颜色 */
             --button-disabled-bg: #555555; /* 深色模式下按钮禁用时的背景颜色 */
+            --bg-color-rgb: 30, 30, 30; /* 深色模式下的背景颜色的RGB值 */
         }
 
         /* 全局 body 样式 */
@@ -39,7 +46,7 @@
             color: var(--text-color);  /* 使用CSS变量设置文字颜色 */
             max-width: 800px;  /* 页面内容的最大宽度 */
             margin: 0 auto;  /* 居中显示页面 */
-            padding: 20px;  /* 内边距，控制内容与页面边缘的距离 */
+            padding: 10px;  /* 内边距，控制内容与页面边缘的距离 */
             display: flex;
             flex-direction: column;  /* 使页面的内容从上到下排列 */
             height: 100dvh;  /* 使用动态视口高度，确保在移动设备上动态适应 */
@@ -48,6 +55,7 @@
 
         /* 聊天窗口的样式 */
         #chat-container {
+            position: relative; /* 保持相对定位 */
             flex-grow: 1;  /* 确保聊天窗口占据页面的剩余空间 */
             overflow-y: auto;  /* 启用竖直滚动条 */
             padding: 10px;  /* 内边距，控制聊天内容与边缘的距离 */
@@ -56,27 +64,83 @@
             margin-bottom: 10px;  /* 控制聊天窗口与下方输入框的距离 */
             max-height: calc(100dvh - 100px);  /* 控制聊天窗口的最大高度，避免超出页面 */
             box-sizing: border-box;
+            scrollbar-width: thin;  /* 适用于Firefox */
+            scrollbar-color: rgba(0, 0, 0, 0.3) transparent;  /* 适用于Firefox */
+        }
+
+        /* Webkit浏览器的滚动条样式（Chrome, Safari, newer versions of Edge） */
+        #chat-container::-webkit-scrollbar {
+            width: 10px;  /* 滚动条宽度，比输入框的稍宽 */
+        }
+
+        #chat-container::-webkit-scrollbar-track {
+            background: transparent;  /* 滚动条轨道背景 */
+        }
+
+        #chat-container::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.3);  /* 滚动条颜色，稍微深一些 */
+            border-radius: 10px;  /* 圆角效果 */
+            border: 2px solid transparent;  /* 透明边框 */
+            background-clip: padding-box;  /* 背景裁剪到内边距盒 */
+        }
+
+        #chat-container::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(0, 0, 0, 0.4);  /* 悬停时的颜色 */
+        }
+
+        /* 适配深色模式 */
+        .dark-mode #chat-container {
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;  /* 适用于Firefox */
+        }
+
+        .dark-mode #chat-container::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.3);  /* 深色模式下的滚动条颜色 */
+        }
+
+        .dark-mode #chat-container::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255, 255, 255, 0.4);  /* 深色模式下悬停时的颜色 */
         }
 
         /* 消息气泡的通用样式 */
         .message {
             margin-bottom: 10px;  /* 每条消息之间的间距 */
-            padding: 10px;  /* 消息气泡的内边距 */
+            padding: 5px 10px;  /* 消息气泡的内边距 */
             border-radius: 10px;  /* 圆角边框 */
             max-width: 80%;  /* 消息气泡的最大宽度，相对于父容器 */
+            display: inline-block; /* 使消息气泡宽度适应内容 */
+        }
+
+        /* 新增：消息内容样式 */
+        .message-content {
+            margin: 0;
+            padding: 0;
+            line-height: 1.4;  /* 调整行高 */
+            font-family: Arial, sans-serif;  /* 恢复之前的字体 */
+            font-size: 16px;  /* 恢复之前的字号 */
+        }
+
+        /* 新增：pre 标签样式 */
+        .message-content pre {
+            margin: 0;
+            padding: 0;
+            white-space: pre-wrap;  /* 允许自动换行 */
+            word-wrap: break-word;  /* 允许长单词换行 */
+            font-family: inherit;  /* 继承父元素的字体 */
+            font-size: inherit;  /* 继承父元素的字号 */
         }
 
         /* 用户消息样式，右对齐 */
         .user-message {
             background-color: var(--user-msg-bg);  /* 使用CSS变量设置用户消息的背景颜色 */
-            align-self: flex-end;  /* 用户消息靠右对齐 */
-            margin-left: auto;  /* 用户消息距离左侧自动对齐 */
+            float: right; /* 使消息靠右显示 */
+            clear: both; /* 清除浮动，确保消息不会并排显示 */
         }
 
         /* AI 消息样式，左对齐 */
         .ai-message {
             background-color: var(--ai-msg-bg);  /* 使用CSS变量设置AI消息的背景颜色 */
-            align-self: flex-start;  /* AI消息靠左对齐 */
+            float: left; /* 使消息靠左显示 */
+            clear: both; /* 清除浮动，确保消息不会并排显示 */
         }
 
         /* 输入框和按钮的容器样式 */
@@ -95,9 +159,48 @@
             background-color: var(--input-bg);  /* 使用CSS变量设置输入框背景颜色 */
             color: var(--text-color);  /* 使用CSS变量设置文字颜色 */
             box-sizing: border-box;
-            min-height: 1.2em; /* 初始高度与字体大小一致 */
+            min-height: 40px; /* 设置最小高度，确保能显示一行文字 */
             max-height: 108px;  /* 最大扩展高度为三行 */
             overflow-y: auto;  /* 超出高度时启用滚动条 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; /* 设置字体 */
+            font-size: 16px; /* 设置字体大小 */
+            line-height: 20px; /* 设置行高 */
+            resize: none; /* 禁止手动调整大小 */
+            scrollbar-width: thin;  /* 适用于Firefox */
+            scrollbar-color: rgba(0, 0, 0, 0.2) transparent;  /* 适用于Firefox */
+        }
+
+        /* Webkit浏览器的滚动条样式（Chrome, Safari, newer versions of Edge） */
+        #user-input::-webkit-scrollbar {
+            width: 6px;  /* 滚动条宽度 */
+        }
+
+        #user-input::-webkit-scrollbar-track {
+            background: transparent;  /* 滚动条轨道背景 */
+        }
+
+        #user-input::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);  /* 滚动条颜色 */
+            border-radius: 10px;  /* 圆角效果 */
+            border: 2px solid transparent;  /* 透明边框 */
+            background-clip: content-box;  /* 背景裁剪到内容区 */
+        }
+
+        #user-input::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(0, 0, 0, 0.3);  /* 悬停时的颜色 */
+        }
+
+        /* 适配深色模式 */
+        .dark-mode #user-input {
+            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;  /* 适用于Firefox */
+        }
+
+        .dark-mode #user-input::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.2);  /* 深色模式下的滚动条颜色 */
+        }
+
+        .dark-mode #user-input::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255, 255, 255, 0.3);  /* 深色模式下悬停时的颜色 */
         }
 
         /* 发送按钮和停止按钮样式，保持一致，仅颜色不同 */
@@ -123,26 +226,233 @@
             color: var(--button-text);  /* 按钮文字颜色 */
         }
 
-        /* 切换主题按钮样式 */
-        #theme-toggle {
-            position: absolute;  /* 绝对定位 */
-            top: 20px;  /* 距离页面顶部20px */
-            right: 20px;  /* 距离页面右侧20px */
-            padding: 5px 10px;  /* 内边距 */
-            border: none;  /* 移除边框 */
-            border-radius: 5px;  /* 圆角边框 */
-            background-color: var(--button-bg);  /* 使用CSS变量设置背景颜色 */
-            color: var(--button-text);  /* 使用CSS变量设置文字颜色 */
-            cursor: pointer;  /* 鼠标悬停时显示指针 */
+        /* 齿轮图标样式 */
+        #settings-icon {
+            position: sticky; /* 使用sticky定位 */
+            top: 0px;  /* 距离聊天窗口顶部10px */
+            left: 0px;  /* 距离聊天窗口左边10px */
+            font-size: 24px;
+            color: var(--text-color);
+            opacity: 0.7;
+            cursor: pointer;
+            z-index: 10; /* 确保齿轮显示在文字之上 */
+            transition: opacity 0.3s;
+            width: 24px; /* 设置固定宽度 */
+            height: 24px; /* 设置固定高度 */
+        }
+
+        #settings-icon::before {
+            content: '⚙️';
+            position: absolute; /* 使用绝对定位 */
+            top: 0;
+            left: 0;
+        }
+
+        #settings-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, rgba(var(--bg-color-rgb), 0.8) 0%, rgba(var(--bg-color-rgb), 0) 70%);
+            z-index: -1;
+        }
+
+        #settings-icon:hover {
+            opacity: 1;
+        }
+
+        /* 禁用默认的焦点轮廓 */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
+        /* 为了保持可访问性，我们可以为键盘焦点添加自定义样式 */
+        *:focus-visible {
+            outline: 2px solid var(--button-bg);
+        }
+
+        /* 设置菜单容器 */
+        #settings-menu {
+            position: fixed;  /* 改为固定定位 */
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100vh;  /* 使用视口高度 */
+            background-color: var(--bg-color);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            z-index: 100;
+            opacity: 0;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        #settings-menu.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* 菜单滚动条样式 */
+        #settings-menu::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #settings-menu::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #settings-menu::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        #settings-menu::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        /* 深色模式适配 */
+        .dark-mode #settings-menu {
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);  /* 深色模式下的阴影 */
+        }
+
+        /* 齿轮图标动画 */
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        #settings-icon.rotate::before {
+            animation: rotate 0.5s linear;
+        }
+
+        /* 新增：菜单遮罩 */
+        #menu-overlay {
+            position: fixed;  /* 改为固定定位 */
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 99;
+        }
+
+        #menu-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 菜单标题样式 */
+        .menu-title {
+            font-size: 20px; /* 增大字号 */
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+
+        /* 设置选项容器 */
+        #settings-options {
+            height: calc(33% - 30px);
+            overflow-y: auto;
+            margin-bottom: 20px;
+            scrollbar-width: none; /* 隐藏 Firefox 滚动条 */
+            padding-left: 10px; /* 添加左侧内边距 */
+        }
+
+        #settings-options::-webkit-scrollbar {
+            display: none; /* 隐藏 Webkit 滚动条 */
+        }
+
+        /* 设置选项样式 */
+        .setting-option {
+            margin-bottom: 15px;
+            color: var(--text-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 设置选项标签样式 */
+        .setting-option span {
+            font-size: 16px;
+        }
+
+        /* 下拉菜单样式 */
+        .setting-option select {
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--text-color);
+            border-radius: 5px;
+            padding: 5px;
+            font-size: 14px;
+            width: 120px; /* 统一宽度 */
+        }
+
+        /* 移除下拉菜单的焦点样式 */
+        .setting-option select:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        /* 历史记录容器 */
+        #history-records {
+            height: calc(67% - 30px); /* 减去标题的高度 */
+            overflow-y: auto;
+            scrollbar-width: none; /* 隐藏 Firefox 滚动条 */
+        }
+
+        #history-records::-webkit-scrollbar {
+            display: none; /* 隐藏 Webkit 滚动条 */
         }
     </style>
 </head>
 <body>
-    <!-- 主题切换按钮 -->
-    <button id="theme-toggle" onclick="toggleTheme()">切换主题</button>
-    
     <!-- 聊天内容容器 -->
-    <div id="chat-container"></div>
+    <div id="chat-container">
+        <!-- 齿轮图标 -->
+        <div id="settings-icon" onclick="toggleSettingsMenu()"></div>
+        <!-- 菜单遮罩 -->
+        <div id="menu-overlay" onclick="toggleSettingsMenu()"></div>
+        <!-- 设置菜单 -->
+        <div id="settings-menu">
+            <div class="menu-title">设置</div>
+            <div id="settings-options">
+                <div class="setting-option">
+                    <span>主题</span>
+                    <select id="theme-select" onchange="changeTheme(this.value)">
+                        <option value="system">跟随系统</option>
+                        <option value="light">保持浅色</option>
+                        <option value="dark">保持深色</option>
+                    </select>
+                </div>
+                <div class="setting-option">
+                    <span>发送方式</span>
+                    <select id="send-method-select" onchange="changeSendMethod(this.value)">
+                        <option value="click">点击发送</option>
+                        <option value="enter">回车发送</option>
+                    </select>
+                </div>
+                <!-- 其他设置选项 -->
+            </div>
+            <div class="menu-title">历史记录</div>
+            <div id="history-records">
+                <!-- 这里将来可以添加聊天记录 -->
+            </div>
+        </div>
+    </div>
 
     <!-- 输入框和发送按钮容器 -->
     <div id="input-container">
@@ -154,9 +464,15 @@
         const chatContainer = document.getElementById('chat-container');  /* 聊天窗口元素 */
         const userInput = document.getElementById('user-input');  /* 输入框元素 */
         const sendButton = document.getElementById('send-button');  /* 发送按钮元素 */
-        const converter = new showdown.Converter();  /* Markdown 转换器 */
+        const converter = new showdown.Converter({
+            simpleLineBreaks: true,
+            literalMidWordUnderscores: true
+        });  /* Markdown 转换器 */
         const conversationHistory = [];  /* 用于存储对话的历史记录 */
         let stopGenerating = false;  /* 用于控制停止生成 */
+        let isUserScrolling = false;  /* 跟踪用户是否正在滚动 */
+        let lastScrollTop = 0;  /* 记录上次滚动位置 */
+        let shouldAutoScroll = true;  /* 控制是否应该自动滚动 */
 
         const modelAPIMapping = {
             "deepseek": {
@@ -167,24 +483,60 @@
         };
 
         /* 主题切换函数 */
-        function toggleTheme() {
-            document.body.classList.toggle('dark-mode');  /* 切换深色模式 */
+        function changeTheme(theme) {
+            if (theme === 'system') {
+                // 检测系统主题
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.body.classList.add('dark-mode');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                }
+                // 监听系统主题变化
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                    if (e.matches) {
+                        document.body.classList.add('dark-mode');
+                    } else {
+                        document.body.classList.remove('dark-mode');
+                    }
+                    updateSettingsIconBackground();
+                });
+            } else if (theme === 'light') {
+                document.body.classList.remove('dark-mode');
+            } else if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+            updateSettingsIconBackground();
+            localStorage.setItem('theme', theme); // 保存主题设置
+        }
+
+        /* 更新齿轮图标背景颜色 */
+        function updateSettingsIconBackground() {
+            const settingsIcon = document.getElementById('settings-icon');
+            const bgColor = getComputedStyle(document.body).getPropertyValue('--bg-color-rgb');
+            settingsIcon.style.background = `radial-gradient(circle, rgba(${bgColor}, 0.8) 0%, rgba(${bgColor}, 0) 70%)`;
         }
 
         /* 发送消息函数 */
         async function sendMessage() {
-            const userMessage = userInput.value.trim();  /* 获取并去除输入框内容的首尾空格 */
+            const userMessage = userInput.value;  /* 获取输入框内容，不使用 trim() */
             if (userMessage === '') return;  /* 如果输入为空，则不发送 */
 
             stopGenerating = false;  /* 重置停止生成标志 */
-            sendButton.textContent = '停止';  /* 将按钮文字设置为“停止” */
+            sendButton.textContent = '停止';  /* 将按钮文字设置为"停止" */
             sendButton.classList.remove('send-mode');  /* 移除发送按钮的绿色样式 */
             sendButton.classList.add('stop-mode');  /* 添加停止按钮的灰色样式 */
             sendButton.onclick = stopMessage;  /* 设置点击事件为停止生成 */
 
+            // 发送新消息时，重置自动滚动
+            shouldAutoScroll = true;
+            isUserScrolling = false;
+
             conversationHistory.push({ role: 'user', content: userMessage });  /* 将用户消息加入历史记录 */
             appendMessage('用户', userMessage, 'user-message');  /* 在页面上显示用户消息 */
             userInput.value = '';  /* 清空输入框 */
+            
+            // 重置输入框高度
+            userInput.style.height = '40px';  /* 恢复输入框的默认高度 */
 
             const aiMessageElement = appendMessage('AI', '', 'ai-message');  /* 创建一个空的AI消息元素 */
             let aiMessageContent = '';  /* 用于保存AI回复内容 */
@@ -225,8 +577,11 @@
                                 const content = parsedData.choices[0].delta.content;  /* 获取AI的回复内容 */
                                 if (content) {
                                     aiMessageContent += content;  /* 累加回复内容 */
-                                    aiMessageElement.innerHTML = `<strong>AI:</strong> ${formatMessage(aiMessageContent)}`;  /* 显示AI回复 */
-                                    chatContainer.scrollTop = chatContainer.scrollHeight;  /* 滚动到聊天窗口底部 */
+                                    aiMessageElement.innerHTML = formatMessage(aiMessageContent, false);  /* 显示AI回复 */
+                                    // 根据 shouldAutoScroll 决定是否滚动
+                                    if (shouldAutoScroll) {
+                                        chatContainer.scrollTop = chatContainer.scrollHeight;  /* 滚动到聊天窗口底部 */
+                                    }
                                 }
                             } catch (error) {
                                 console.error('Error parsing JSON:', error);  /* 处理解析错误 */
@@ -240,11 +595,10 @@
                 console.error('Error:', error);  /* 处理请求错误 */
                 appendMessage('系统', '发生错误，请稍后再试。', 'system-message');  /* 显示错误消息 */
             } finally {
-                sendButton.textContent = '发送';  /* 按钮文字恢复为“发送” */
+                sendButton.textContent = '发送';  /* 按钮文字恢复为"发送" */
                 sendButton.classList.remove('stop-mode');  /* 移除停止按钮的灰色样式 */
                 sendButton.classList.add('send-mode');  /* 添加发送按钮的绿色样式 */
                 sendButton.onclick = sendMessage;  /* 恢复点击事件为发送消息 */
-                userInput.style.height = '36px';  /* 恢复输入框的高度 */
             }
         }
 
@@ -257,26 +611,158 @@
         function appendMessage(sender, message, className) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message', className);  /* 添加样式类 */
-            messageDiv.innerHTML = `<strong>${sender}:</strong> ${formatMessage(message)}`;  /* 设置消息内容 */
+            messageDiv.innerHTML = formatMessage(message, className === 'user-message');  /* 设置消息内容 */
             chatContainer.appendChild(messageDiv);  /* 将消息添加到聊天窗口 */
-            chatContainer.scrollTop = chatContainer.scrollHeight;  /* 滚动到底部 */
+            
+            // 根据 shouldAutoScroll 决定是否滚动
+            if (shouldAutoScroll) {
+                chatContainer.scrollTop = chatContainer.scrollHeight;  /* 滚动到底部 */
+            }
             return messageDiv;
         }
 
-        /* 将Markdown格式的消息转换为HTML */
-        function formatMessage(message) {
-            return converter.makeHtml(message);
+        /* 将消息转换为HTML，保留原始格式并支持Markdown */
+        function formatMessage(message, isUserMessage) {
+            let htmlContent;
+            
+            if (isUserMessage) {
+                // 对于用户消息，保留原始的换行符
+                htmlContent = message.replace(/\n/g, '<br>');
+            } else {
+                // 对于AI消息，使用Markdown转换
+                htmlContent = converter.makeHtml(message);
+                // 将<p>标签替换为<div>，以避免额外的边距
+                htmlContent = htmlContent.replace(/<p>/g, '<div>').replace(/<\/p>/g, '</div>');
+            }
+            
+            // 使用div来包装内容
+            return `<div class="message-content">${htmlContent}</div>`;
+        }
+
+        /* HTML转义函数，防止XSS攻击 */
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         /* 自动调整输入框高度，限制最大高度为三行 */
         userInput.addEventListener('input', function() {
-            this.style.height = '36px';  /* 重置高度为一行 */
+            this.style.height = '40px';  /* 重置高度为默认高度 */
             if (this.scrollHeight <= 108) {
                 this.style.height = this.scrollHeight + 'px';  /* 根据内容调整高度 */
             } else {
-                this.style.height = '108px';  /* 限制最大高度为三行 */
+                this.style.height = '108px';  /* 限制最大高度为三行 */          
             }
         });
+
+        /* 监听聊天窗口的滚动事件 */
+        chatContainer.addEventListener('scroll', function() {
+            // 检查是否是用户主动滚动
+            if (chatContainer.scrollTop < lastScrollTop) {
+                isUserScrolling = true;
+                shouldAutoScroll = false;
+            }
+            // 检查是否滚动到底部
+            if (chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + 1) {
+                isUserScrolling = false;
+                shouldAutoScroll = true;
+            }
+            lastScrollTop = chatContainer.scrollTop;
+        });
+
+        /* 切换设置菜单的显示/隐藏 */
+        function toggleSettingsMenu() {
+            const settingsMenu = document.getElementById('settings-menu');
+            const settingsIcon = document.getElementById('settings-icon');
+            const menuOverlay = document.getElementById('menu-overlay');
+            settingsMenu.classList.toggle('show');
+            menuOverlay.classList.toggle('show');
+            settingsIcon.classList.add('rotate');
+            setTimeout(() => {
+                settingsIcon.classList.remove('rotate');
+            }, 500);
+        }
+
+        let sendMethod = 'click'; // 默认发送方式
+
+        function changeSendMethod(method) {
+            sendMethod = method;
+            localStorage.setItem('sendMethod', method); // 保存发送方式设置
+        }
+
+        // 修改输入框的键盘事件监听
+        userInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                if (sendMethod === 'enter') {
+                    if (!event.shiftKey) {
+                        event.preventDefault(); // 阻止默认的换行行为
+                        sendMessage(); // 发送消息
+                    }
+                } else {
+                    if (event.shiftKey) {
+                        // 如果是点击发送模式，Shift+Enter 仍然允许换行
+                        return;
+                    }
+                }
+            }
+        });
+
+        // 页面加载时设置主题和发送方式
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'system';
+            document.getElementById('theme-select').value = savedTheme;
+            changeTheme(savedTheme);
+
+            const savedSendMethod = localStorage.getItem('sendMethod') || 'click';
+            document.getElementById('send-method-select').value = savedSendMethod;
+            changeSendMethod(savedSendMethod);
+        });
+
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').then((registration) => {
+              console.log('ServiceWorker registration successful');
+            }, (err) => {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+          });
+        }
+
+        let deferredPrompt;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          // 显示自定义提示
+          showInstallPrompt();
+        });
+
+        function showInstallPrompt() {
+          // 创建一个自定义的提示元素
+          const prompt = document.createElement('div');
+          prompt.innerHTML = '将此应用添加到主屏幕以便快速访问';
+          prompt.style.position = 'fixed';
+          prompt.style.bottom = '20px';
+          prompt.style.left = '20px';
+          prompt.style.right = '20px';
+          prompt.style.backgroundColor = '#075e54';
+          prompt.style.color = 'white';
+          prompt.style.padding = '10px';
+          prompt.style.borderRadius = '5px';
+          prompt.style.textAlign = 'center';
+          
+          const closeButton = document.createElement('button');
+          closeButton.innerHTML = '关闭';
+          closeButton.style.marginLeft = '10px';
+          closeButton.onclick = () => prompt.remove();
+          
+          prompt.appendChild(closeButton);
+          document.body.appendChild(prompt);
+        }
     </script>
 </body>
 </html>

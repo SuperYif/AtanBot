@@ -454,6 +454,12 @@
         #history-records::-webkit-scrollbar {
             display: none; /* 隐藏 Webkit 滚动条 */
         }
+
+        /* 禁用文本选择和点击提示效果 */
+        #settings-menu, #settings-menu * {
+            user-select: none; /* 禁用文本选择 */
+            -webkit-tap-highlight-color: transparent; /* 禁用点击提示效果 */
+        }
     </style>
 </head>
 <body>
@@ -845,3 +851,5 @@
     </script>
 </body>
 </html>
+
+
